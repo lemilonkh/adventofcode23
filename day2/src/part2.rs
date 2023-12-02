@@ -14,7 +14,7 @@ struct Game {
     bags: Vec<Bag>,
 }
 
-#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq)]
 struct Bag {
     red: u32,
     green: u32,
