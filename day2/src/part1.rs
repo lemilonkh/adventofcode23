@@ -36,7 +36,7 @@ fn line_parser(i: &str) -> IResult<&str, Game> {
     Ok((
         i,
         Game {
-            id: parsed.0 .1.parse().unwrap(),
+            id: parsed.0 .1.parse().expect("valid game ID"),
             bags: parsed.1,
         },
     ))
@@ -54,7 +54,7 @@ fn bag_parser(i: &str) -> IResult<&str, Bag> {
         blue: 0,
     };
     for color in color_list {
-        let num: u32 = color.0.parse().unwrap();
+        let num: u32 = color.0.parse().expect("valid cube count");
         match color.1 {
             "red" => bag.red = num,
             "green" => bag.green = num,
@@ -80,9 +80,9 @@ fn part1(input: &str) -> u32 {
                             && bag.blue <= MAX_BAG.blue
                     })
                 })
-                .unwrap()
+                .expect("valid line")
         })
-        .fold(0, |sum, result| sum + result.unwrap().1.id)
+        .fold(0, |sum, result| sum + result.expect("valid game").1.id)
 }
 
 fn main() {
