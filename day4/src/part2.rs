@@ -63,8 +63,8 @@ fn part1(input: &str) -> usize {
         })
         .collect();
 
-    let mut card_queue: VecDeque<u32> =
-        VecDeque::from(cards.keys().map(|k| k.clone()).collect::<Vec<u32>>());
+    let mut card_queue: VecDeque<u32> = VecDeque::new();
+    card_queue.extend(cards.keys());
     let mut total_cards: usize = 0;
     while !card_queue.is_empty() {
         total_cards += 1;
