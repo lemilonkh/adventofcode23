@@ -61,7 +61,7 @@ fn check_and_save_number(
     }
 }
 
-fn part1(input: &str) -> u32 {
+fn part2(input: &str) -> u32 {
     let grid: Vec<Vec<char>> = input
         .split("\n")
         .filter(|line| line.len() > 0)
@@ -99,7 +99,7 @@ fn part1(input: &str) -> u32 {
 
 fn main() {
     let input = include_str!("./input1.txt");
-    let output = part1(input);
+    let output = part2(input);
     dbg!(output);
 }
 
@@ -109,7 +109,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = part1(include_str!("input1_test.txt"));
+        let result = part2(include_str!("input1_test.txt"));
         assert_eq!(result, 467835);
     }
 }
