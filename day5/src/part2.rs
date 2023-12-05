@@ -19,7 +19,7 @@ struct Map<'a> {
 
 #[derive(Default, Debug, PartialEq, Eq)]
 struct MapRange {
-    source_range: Range<u32>,
+    source_start: u32,
     destination_start: u32,
     range_length: u32,
 }
@@ -33,8 +33,8 @@ fn map_parser(i: &str) -> IResult<&str, Map> {
         .map(|list| {
             assert_eq!(list.len(), 3);
             MapRange {
-                source_range: list[1]..list[1] + list[2],
                 destination_start: list[0],
+                source_start: list[1],
                 range_length: list[2],
             }
         })
@@ -83,23 +83,25 @@ fn part1(input: &str) -> u32 {
 
     *seed_ranges
         .par_iter()
-        .flat_map(|range| -> Vec<u32> {
+        .map(|range| {
             range
                 .to_owned()
                 .map(|number| {
                     let mut result = number;
                     for map in maps.iter() {
                         for range in map.ranges.iter() {
-                            if range.source_range.contains(&result) {
-                                result =
-                                    result - range.source_range.start + range.destination_start;
+                            if result >= range.source_start
+                                && result < range.source_start + range.range_length
+                            {
+                                result = result - range.source_start + range.destination_start;
                                 break;
                             }
                         }
                     }
                     result
                 })
-                .collect()
+                .min()
+                .expect("should have a minimum height in thread")
         })
         .collect::<Vec<u32>>() // this makes it 30 seconds faster - why?
         .iter()
