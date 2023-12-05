@@ -1,4 +1,5 @@
 extern crate nom;
+use rayon::prelude::*;
 use std::ops::Range;
 
 use nom::{
@@ -65,40 +66,42 @@ fn number_list_parser(i: &str) -> IResult<&str, Vec<u32>> {
 fn part1(input: &str) -> u32 {
     let parts: Vec<&str> = input.split("\n\n").collect();
 
-    let (_, seed_ranges) = seeds_parser(parts[0]).expect("valid list of seeds");
-    assert_eq!(
-        seed_ranges.len() % 2,
-        0,
-        "even number of seed range numbers"
-    );
-    let seeds: Vec<u32> = seed_ranges
+    let (_, seed_input) = seeds_parser(parts[0]).expect("valid list of seeds");
+    assert_eq!(seed_input.len() % 2, 0, "even number of seed range numbers");
+    let seed_ranges: Vec<Range<u32>> = seed_input
         .chunks_exact(2)
         .inspect(|w| println!("a: {}, b: {}", w[0], w[1]))
-        .flat_map(|w| (w[0]..w[0] + w[1]).collect::<Vec<u32>>())
+        .map(|w| w[0]..w[0] + w[1])
         .collect();
 
-    println!("Seed count: {}", seeds.len());
+    println!("Seed range count: {}", seed_ranges.len());
 
-    *parts[1..]
+    let maps: Vec<Map> = parts[1..]
         .iter()
-        .map(|part| map_parser(*part))
-        .fold(seeds, |numbers, result| {
-            let (_, map) = result.expect("valid alamanac part");
-            println!("Step {} to {}", map.source, map.destination);
-            numbers
-                .iter()
+        .map(|part| map_parser(*part).expect("valid alamanac map").1)
+        .collect();
+
+    *seed_ranges
+        .par_iter()
+        .flat_map(|range| -> Vec<u32> {
+            range
+                .to_owned()
                 .map(|number| {
-                    let mut result = *number;
-                    for range in map.ranges.iter() {
-                        if range.source_range.contains(number) {
-                            result = number - range.source_range.start + range.destination_start;
-                            break;
+                    let mut result = number;
+                    for map in maps.iter() {
+                        for range in map.ranges.iter() {
+                            if range.source_range.contains(&result) {
+                                result =
+                                    result - range.source_range.start + range.destination_start;
+                                break;
+                            }
                         }
                     }
                     result
                 })
                 .collect()
         })
+        .collect::<Vec<u32>>() // this makes it 30 seconds faster - why?
         .iter()
         .min()
         .expect("should have a minimum height")
