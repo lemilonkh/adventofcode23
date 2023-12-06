@@ -137,12 +137,12 @@ mod tests {
                 ranges: vec!(
                     MapRange {
                         destination_start: 50,
-                        source_range: 98..100,
+                        source_start: 98,
                         range_length: 2
                     },
                     MapRange {
                         destination_start: 52,
-                        source_range: 50..98,
+                        source_start: 50,
                         range_length: 48
                     },
                 )
