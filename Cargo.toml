@@ -6,4 +6,5 @@ members = ["day*"]
 thiserror = "1.0.50"
 nom = "7.1.3"
 rayon = "1.8.0"
+num = "0.4.1"
 
