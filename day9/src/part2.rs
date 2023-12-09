@@ -29,23 +29,26 @@ fn int_parser(i: &str) -> IResult<&str, i64> {
 fn part2(input: &str) -> i64 {
     let histories = input_parser(input).expect("valid input").1;
     histories
-        .iter()
+        .into_iter()
         .map(|history| {
-            let mut sequences: Vec<Vec<i64>> = vec![history.clone()];
+            let mut first_numbers: Vec<i64> = vec![history[0]];
+            let mut prev_sequence = history;
             loop {
-                let prev_sequence = sequences.last().expect("previous sequence");
                 let sequence: Vec<i64> = prev_sequence.windows(2).map(|w| w[1] - w[0]).collect();
+                let all_zeroes = sequence.iter().all(|n| *n == 0);
 
-                if sequence.iter().all(|n| *n == 0) {
+                if all_zeroes {
                     break;
                 } else {
-                    sequences.push(sequence);
+                    first_numbers.push(*sequence.first().expect("non-empty sequence"));
+                    prev_sequence = sequence;
                 }
             }
 
-            let next_value = sequences.iter().rev().fold(0, |acc, sequence| {
-                sequence.first().expect("non-empty sequence") - acc
-            });
+            let next_value = first_numbers
+                .iter()
+                .rev()
+                .fold(0, |acc, first_number| first_number - acc);
             dbg!(next_value)
         })
         .sum()
