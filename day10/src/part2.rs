@@ -79,7 +79,6 @@ fn part1(input: &str) -> u32 {
 
     let mut position = start_coords.expect("found starting position");
     let mut next_direction: Option<Direction> = None;
-    let mut loop_length: u32 = 0;
     let width = grid[0].len() as i32;
     let height = grid.len() as i32;
 
@@ -90,7 +89,6 @@ fn part1(input: &str) -> u32 {
 
     'outer: loop {
         let mut found_next_pipe = false;
-        println!("At {:?} with length {}", position, loop_length);
 
         for direction in Direction::iter() {
             if next_direction.is_some() && next_direction.as_ref() != Some(&direction) {
@@ -104,7 +102,6 @@ fn part1(input: &str) -> u32 {
                 continue;
             }
             let target_char = grid[target.1 as usize][target.0 as usize];
-            println!("Found char {} in direction {:?}", target_char, direction);
             if target_char == 'S' {
                 status_grid[position.1 * 2][position.0 * 2] = 'L';
                 status_grid[(position.1 as i32 * 2 + y) as usize]
@@ -115,7 +112,6 @@ fn part1(input: &str) -> u32 {
             // check if adjacent char is a pipe and it allows connecting with the previous pipe
             let directions = get_pipe_directions(target_char);
             if directions.is_none() {
-                println!("No directions for char {}", target_char);
                 continue;
             }
             let directions = directions.unwrap();
@@ -137,7 +133,6 @@ fn part1(input: &str) -> u32 {
             }
         }
         assert_eq!(found_next_pipe, true);
-        loop_length += 1;
     }
 
     // flood fill from every outer border tile of the grid
