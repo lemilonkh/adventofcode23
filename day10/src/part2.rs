@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -19,15 +17,6 @@ impl Direction {
             EAST => WEST,
             SOUTH => NORTH,
             WEST => EAST,
-        }
-    }
-
-    fn orthogonals(&self) -> (Direction, Direction) {
-        match self {
-            NORTH => (WEST, EAST),
-            EAST => (SOUTH, NORTH),
-            SOUTH => (WEST, EAST),
-            WEST => (SOUTH, NORTH),
         }
     }
 }
@@ -53,53 +42,22 @@ fn get_pipe_directions(char: char) -> Option<(Direction, Direction)> {
     }
 }
 
-fn has_edge(
-    edges: &HashMap<(usize, usize), (usize, usize)>,
-    x: usize,
-    y: usize,
-    direction: Direction,
-) -> bool {
-    let (ortho1, _ortho2) = direction.orthogonals();
-    let delta = get_direction_delta(&ortho1);
-    let position = (x, y);
-    let target = ((x as i32 + delta.0) as usize, (y as i32 + delta.1) as usize);
-    if edges.contains_key(&position) {
-        if edges[&position] == target {
-            return true;
-        }
-    }
-    if edges.contains_key(&target) {
-        if edges[&target] == position {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-fn flood_fill(
-    x: usize,
-    y: usize,
-    target: char,
-    replacement: char,
-    edges: &HashMap<(usize, usize), (usize, usize)>,
-    grid: &mut Vec<Vec<char>>,
-) {
+fn flood_fill(x: usize, y: usize, target: char, replacement: char, grid: &mut Vec<Vec<char>>) {
     if grid[y][x] == target {
         grid[y][x] = replacement;
-    }
 
-    if y > 0 && !has_edge(edges, x, y, NORTH) {
-        flood_fill(x, y - 1, target, replacement, edges, grid);
-    }
-    if x > 0 && !has_edge(edges, x, y, WEST) {
-        flood_fill(x - 1, y, target, replacement, edges, grid);
-    }
-    if y < grid.len() - 1 && !has_edge(edges, x, y, SOUTH) {
-        flood_fill(x, y + 1, target, replacement, edges, grid);
-    }
-    if x < grid[0].len() - 1 && !has_edge(edges, x, y, EAST) {
-        flood_fill(x + 1, y, target, replacement, edges, grid);
+        if y > 0 {
+            flood_fill(x, y - 1, target, replacement, grid);
+        }
+        if x > 0 {
+            flood_fill(x - 1, y, target, replacement, grid);
+        }
+        if y < grid.len() - 1 {
+            flood_fill(x, y + 1, target, replacement, grid);
+        }
+        if x < grid[0].len() - 1 {
+            flood_fill(x + 1, y, target, replacement, grid);
+        }
     }
 }
 
@@ -125,11 +83,12 @@ fn part1(input: &str) -> u32 {
     let width = grid[0].len() as i32;
     let height = grid.len() as i32;
 
-    let mut status_grid: Vec<Vec<char>> = (0..height).map(|_i| vec!['.'; width as usize]).collect();
-    let mut edges: HashMap<(usize, usize), (usize, usize)> = HashMap::new();
+    // let mut status_grid: Vec<Vec<char>> = (0..height).map(|_i| vec!['.'; width as usize]).collect();
+    let mut status_grid: Vec<Vec<char>> = (0..height * 2)
+        .map(|_i| vec!['.'; width as usize * 2])
+        .collect();
 
     'outer: loop {
-        status_grid[position.1][position.0] = 'L'; // mark as loop
         let mut found_next_pipe = false;
         println!("At {:?} with length {}", position, loop_length);
 
@@ -147,6 +106,9 @@ fn part1(input: &str) -> u32 {
             let target_char = grid[target.1 as usize][target.0 as usize];
             println!("Found char {} in direction {:?}", target_char, direction);
             if target_char == 'S' {
+                status_grid[position.1 * 2][position.0 * 2] = 'L';
+                status_grid[(position.1 as i32 * 2 + y) as usize]
+                    [(position.0 as i32 * 2 + x) as usize] = 'L';
                 break 'outer;
             }
 
@@ -160,10 +122,10 @@ fn part1(input: &str) -> u32 {
 
             if direction.opposite() == directions.0 || direction.opposite() == directions.1 {
                 found_next_pipe = true;
+                status_grid[position.1 * 2][position.0 * 2] = 'L';
+                status_grid[(position.1 as i32 * 2 + y) as usize]
+                    [(position.0 as i32 * 2 + x) as usize] = 'L';
                 position = (target.0 as usize, target.1 as usize);
-                edges
-                    .entry(position)
-                    .or_insert((target.0 as usize, target.1 as usize));
 
                 next_direction = if direction.opposite() == directions.0 {
                     Some(directions.1)
@@ -179,28 +141,29 @@ fn part1(input: &str) -> u32 {
     }
 
     // flood fill from every outer border tile of the grid
-    for y in 0..grid.len() {
-        flood_fill(0, y, '.', 'O', &edges, &mut status_grid);
-        flood_fill(width as usize - 1, y, '.', 'O', &edges, &mut status_grid);
+    for y in 0..grid.len() * 2 {
+        flood_fill(0, y, '.', 'O', &mut status_grid);
+        flood_fill((width as usize - 1) * 2 + 1, y, '.', 'O', &mut status_grid);
     }
-    for x in 1..grid[0].len() - 1 {
-        flood_fill(x, 0, '.', 'O', &edges, &mut status_grid);
-        flood_fill(x, height as usize - 1, '.', 'O', &edges, &mut status_grid);
+    for x in 1..grid[0].len() * 2 {
+        flood_fill(x, 0, '.', 'O', &mut status_grid);
+        flood_fill(x, (height as usize - 1) * 2 + 1, '.', 'O', &mut status_grid);
     }
 
     status_grid
         .iter()
         .for_each(|row| println!("{}", row.iter().collect::<String>()));
 
-    status_grid.iter().fold(0, |acc, row| {
+    status_grid.iter().step_by(2).fold(0, |acc, row| {
         acc + row
             .iter()
+            .step_by(2)
             .fold(0, |acc, c| if *c == '.' { acc + 1 } else { acc })
     })
 }
 
 fn main() {
-    let input = include_str!("./input4_test.txt");
+    let input = include_str!("./input1.txt");
     let output = part1(input);
     dbg!(output);
 }
@@ -211,9 +174,9 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = part1(include_str!("input1_test.txt"));
+        let result = part1(include_str!("input3_test.txt"));
         assert_eq!(result, 4);
-        let result = part1(include_str!("input2_test.txt"));
+        let result = part1(include_str!("input4_test.txt"));
         assert_eq!(result, 8);
     }
 }
