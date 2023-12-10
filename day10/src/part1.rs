@@ -73,7 +73,6 @@ fn part1(input: &str) -> u32 {
     }
 
     let mut position = start_coords.expect("found starting position");
-    let mut prev_direction: Option<Direction> = None;
     let mut next_direction: Option<Direction> = None;
     let mut loop_length: u32 = 0;
     let width = grid[0].len() as i32;
@@ -84,17 +83,6 @@ fn part1(input: &str) -> u32 {
         println!("At {:?} with length {}", position, loop_length);
         for direction in Direction::iter() {
             if next_direction.is_some() && next_direction.as_ref() != Some(&direction) {
-                println!(
-                    "Direction {:?} is not next direction {:?}, skipping",
-                    direction, next_direction
-                );
-                continue;
-            }
-            if prev_direction == Some(direction.opposite()) {
-                println!(
-                    "Prev direction {:?} is opposite of current direction {:?}, skipping",
-                    prev_direction, direction
-                );
                 continue;
             }
 
@@ -116,14 +104,10 @@ fn part1(input: &str) -> u32 {
                 println!("No directions for char {}", target_char);
                 continue;
             }
-            let directions = dbg!(directions.unwrap());
+            let directions = directions.unwrap();
 
             if direction.opposite() == directions.0 || direction.opposite() == directions.1 {
                 found_next_pipe = true;
-                println!(
-                    "Moving to char {} in direction {:?}",
-                    target_char, direction
-                );
                 position = (target.0 as usize, target.1 as usize);
 
                 next_direction = if direction.opposite() == directions.0 {
@@ -131,9 +115,7 @@ fn part1(input: &str) -> u32 {
                 } else {
                     Some(directions.0)
                 };
-                dbg!(&next_direction);
 
-                prev_direction = Some(direction);
                 break;
             }
         }
