@@ -30,16 +30,6 @@ fn get_direction_delta(direction: &Direction) -> (i32, i32) {
     }
 }
 
-/*fn get_delta_direction(delta: (i32, i32)) -> Option<Direction> {
-    match delta {
-        (0, -1) => Some(NORTH),
-        (1, 0) => Some(EAST),
-        (0, 1) => Some(SOUTH),
-        (-1, 0) => Some(WEST),
-        _ => None,
-    }
-}*/
-
 fn get_pipe_directions(char: char) -> Option<(Direction, Direction)> {
     match char {
         '|' => Some((NORTH, SOUTH)),
