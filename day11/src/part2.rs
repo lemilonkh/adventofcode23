@@ -36,7 +36,7 @@ fn part1(input: &str, scale_factor: i64) -> i64 {
     // compute manhattan distance of all pairs of galaxies
     galaxies
         .iter()
-        .tuple_combinations::<(_, _)>()
+        .tuple_combinations()
         .map(|(a, b)| (a.0 - b.0).abs() + (a.1 - b.1).abs())
         .sum()
 }
