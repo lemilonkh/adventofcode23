@@ -43,7 +43,7 @@ fn part1(input: &str, scale_factor: i64) -> i64 {
 
 fn main() {
     let input = include_str!("./input1.txt");
-    let output = part1(input, 1_000_000_i64);
+    let output = part1(input, 1_000_000);
     dbg!(output);
 }
 
