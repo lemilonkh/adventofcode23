@@ -13,4 +13,5 @@ path = "src/part2.rs"
 
 [dependencies]
 nom = { workspace = true }
+cached = { workspace = true }
 
