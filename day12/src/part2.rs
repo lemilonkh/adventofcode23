@@ -1,6 +1,8 @@
 extern crate nom;
 
+use cached::proc_macro::cached;
 use std::str::FromStr;
+
 use nom::{
     bytes::complete::tag,
     character::complete::{digit1, one_of, space1},
@@ -10,122 +12,65 @@ use nom::{
     IResult,
 };
 
-fn line_parser(i: &str) -> IResult<&str, (&[u8], Vec<u32>)> {
-    let (i, (conditions, groups)) =
-        separated_pair(recognize(many1(one_of(".#?"))), space1, number_list_parser)(i)?;
-
-    Ok((i, (conditions.as_bytes(), groups)))
+fn line_parser(i: &str) -> IResult<&str, (&str, Vec<usize>)> {
+    separated_pair(recognize(many1(one_of(".#?"))), space1, number_list_parser)(i)
 }
 
-fn number_list_parser(i: &str) -> IResult<&str, Vec<u32>> {
+fn number_list_parser(i: &str) -> IResult<&str, Vec<usize>> {
     separated_list1(tag(","), int_parser)(i)
 }
 
-fn int_parser(i: &str) -> IResult<&str, u32> {
+fn int_parser(i: &str) -> IResult<&str, usize> {
     map_res(digit1, FromStr::from_str)(i)
 }
 
-fn is_valid_permutation(conditions: &str, groups: &Vec<u32>, permutation: usize) -> bool {
-    // println!("Perm: {:?}, Groups: {:?}", permutation, groups);
-    let mut contiguous_damaged_springs: u32 = 0;
-    let mut question_mark_count: u32 = 0;
-    let mut group_iter = groups.iter();
-    for mut spring in conditions.chars() {
-        if spring == '?' {
-            let bit = permutation & (1 << question_mark_count);
-            question_mark_count += 1;
-            spring = if bit > 0 { '.' } else { '#' };
-        }
-        match spring {
-            '#' => contiguous_damaged_springs += 1,
-            '.' => {
-                if contiguous_damaged_springs > 0 {
-                    let group_count = group_iter.next();
-                    if group_count.is_none() {
-                        return false;
-                    }
-                    if contiguous_damaged_springs != *group_count.unwrap() {
-                        return false;
-                    }
-                    contiguous_damaged_springs = 0;
-                }
-            }
-            _ => eprintln!("Invalid char in permutation: {}", spring),
-        }
-    }
-    // if permutation ends on #, check last group count
-    if contiguous_damaged_springs > 0 {
-        let group_count = group_iter.next();
-        if group_count.is_none() {
-            return false;
-        }
-        if contiguous_damaged_springs != *group_count.unwrap() {
-            return false;
-        }
-    }
-    // if there should be more groups than there are in the input, return false
-    group_iter.next().is_none()
-}
-
-fn apply_permutation(conditions: &str, unknown_indices: &Vec<usize>, permutation: usize) -> String {
-    let mut condition_permutation = conditions.to_owned();
-    for (i, &index) in unknown_indices.iter().enumerate() {
-        let bit = permutation & (1 << i);
-        condition_permutation.replace_range(index..index + 1, if bit > 0 { "." } else { "#" });
-    }
-    condition_permutation
-}
-
 fn part1(input: &str) -> usize {
-    let rows = input
+    let unfolded_input = input.lines().fold(String::new(), |mut acc, line| {
+        let (c, g) = line.split_once(" ").expect("space-separated line");
+        acc.push_str(&format!("{c}?{c}?{c}?{c}?{c} {g},{g},{g},{g},{g}\n"));
+        acc
+    });
+
+    unfolded_input
         .split("\n")
         .filter(|line| line.len() > 0)
         .map(|line| line_parser(line).expect("valid input").1)
-        .collect::<Vec<_>>();
-
-    rows.into_iter()
-        .map(|(conditions, groups)| {
-            let mut conditions = (conditions.to_owned() + "?").repeat(5);
-            conditions.pop(); // remove last ?
-
-            let groups = std::iter::repeat(groups.iter())
-                .take(5)
-                .flatten()
-                .map(|g| *g)
-                .collect::<Vec<_>>();
-
-            let sequence_permutations = conditions
-                .split(".")
-                .map(|sequence| {
-                    if !sequence.contains('?') {
-                        vec![sequence.to_owned()]
-                    } else {
-                        let unknown_indices = conditions
-                            .char_indices()
-                            .filter_map(|(i, spring)| (spring == '?').then_some(i))
-                            .collect::<Vec<_>>();
-                        (0..(2_usize.pow(unknown_indices.len() as u32)))
-                            .filter_map(|permutation| {
-                                is_valid_permutation(&conditions, &groups, permutation).then_some(
-                                    apply_permutation(&conditions, &unknown_indices, permutation),
-                                )
-                            })
-                            .collect()
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            let possibilities = 1_usize;
-            for sequence in sequence_permutations {
-                if sequence.len() == 1 {
-                    continue;
-                }
-                todo!();
-            }
-            possibilities
-        })
-        .inspect(|count| println!("Valid permutations: {}", count))
+        .map(|(conditions, groups)| permutations(conditions.as_bytes(), None, &groups))
         .sum()
+}
+
+#[cached(
+    key = "String",
+    convert = r#"{format!("{:?}{:?}{:?}", input, size, groups)}"#
+)]
+fn permutations(input: &[u8], size: Option<usize>, groups: &[usize]) -> usize {
+    if input.is_empty() {
+        return match size {
+            // final group has the right size
+            Some(n) if groups == &[n] => 1,
+            // all groups matched
+            None if groups.is_empty() => 1,
+            // unmatched groups remaining or wrong size, no possible permutations
+            _ => 0,
+        };
+    }
+
+    match (input[0], size, groups) {
+        // throw away consecutive dots and question marks after all groups are resolved
+        (b'.', None, _) | (b'?', None, []) => permutations(&input[1..], None, groups),
+        // if the current group amount has been matched, move on to the next group
+        (b'.' | b'?', Some(n), [e, ..]) if n == *e => permutations(&input[1..], None, &groups[1..]),
+        // increase size of current group if it hasn't been matched yet
+        (b'#' | b'?', Some(n), [e, ..]) if n < *e => permutations(&input[1..], Some(n + 1), groups),
+        // start a new group
+        (b'#', None, [_, ..]) => permutations(&input[1..], Some(1), groups),
+        // calculate both branches for a ? at the start of a group - as . or as #
+        (b'?', None, _) => {
+            permutations(&input[1..], None, groups) + permutations(&input[1..], Some(1), groups)
+        }
+        // group not matched, no possible permutations
+        _ => 0,
+    }
 }
 
 fn main() {
@@ -141,7 +86,7 @@ mod tests {
     #[test]
     fn parse_input() {
         let result = line_parser("???.### 1,1,3").unwrap().1;
-        assert_eq!(result, ("???.###", vec!(1, 1, 3)),);
+        assert_eq!(result, ("???.###", vec!(1, 1, 3)));
     }
 
     #[test]
