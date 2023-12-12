@@ -1,7 +1,6 @@
 extern crate nom;
 
 use std::str::FromStr;
-
 use nom::{
     bytes::complete::tag,
     character::complete::{digit1, one_of, space1},
@@ -11,8 +10,11 @@ use nom::{
     IResult,
 };
 
-fn line_parser(i: &str) -> IResult<&str, (&str, Vec<u32>)> {
-    separated_pair(recognize(many1(one_of(".#?"))), space1, number_list_parser)(i)
+fn line_parser(i: &str) -> IResult<&str, (&[u8], Vec<u32>)> {
+    let (i, (conditions, groups)) =
+        separated_pair(recognize(many1(one_of(".#?"))), space1, number_list_parser)(i)?;
+
+    Ok((i, (conditions.as_bytes(), groups)))
 }
 
 fn number_list_parser(i: &str) -> IResult<&str, Vec<u32>> {
@@ -65,6 +67,15 @@ fn is_valid_permutation(conditions: &str, groups: &Vec<u32>, permutation: usize)
     group_iter.next().is_none()
 }
 
+fn apply_permutation(conditions: &str, unknown_indices: &Vec<usize>, permutation: usize) -> String {
+    let mut condition_permutation = conditions.to_owned();
+    for (i, &index) in unknown_indices.iter().enumerate() {
+        let bit = permutation & (1 << i);
+        condition_permutation.replace_range(index..index + 1, if bit > 0 { "." } else { "#" });
+    }
+    condition_permutation
+}
+
 fn part1(input: &str) -> usize {
     let rows = input
         .split("\n")
@@ -83,16 +94,35 @@ fn part1(input: &str) -> usize {
                 .map(|g| *g)
                 .collect::<Vec<_>>();
 
-            let unknown_indices = conditions
-                .char_indices()
-                .filter_map(|(i, spring)| (spring == '?').then_some(i))
+            let sequence_permutations = conditions
+                .split(".")
+                .map(|sequence| {
+                    if !sequence.contains('?') {
+                        vec![sequence.to_owned()]
+                    } else {
+                        let unknown_indices = conditions
+                            .char_indices()
+                            .filter_map(|(i, spring)| (spring == '?').then_some(i))
+                            .collect::<Vec<_>>();
+                        (0..(2_usize.pow(unknown_indices.len() as u32)))
+                            .filter_map(|permutation| {
+                                is_valid_permutation(&conditions, &groups, permutation).then_some(
+                                    apply_permutation(&conditions, &unknown_indices, permutation),
+                                )
+                            })
+                            .collect()
+                    }
+                })
                 .collect::<Vec<_>>();
 
-            (0..(2_usize.pow(unknown_indices.len() as u32)))
-                .filter_map(|permutation| {
-                    is_valid_permutation(&conditions, &groups, permutation).then_some(1)
-                })
-                .count()
+            let possibilities = 1_usize;
+            for sequence in sequence_permutations {
+                if sequence.len() == 1 {
+                    continue;
+                }
+                todo!();
+            }
+            possibilities
         })
         .inspect(|count| println!("Valid permutations: {}", count))
         .sum()
