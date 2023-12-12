@@ -23,11 +23,17 @@ fn int_parser(i: &str) -> IResult<&str, u32> {
     map_res(digit1, FromStr::from_str)(i)
 }
 
-fn is_valid_permutation(permutation: &Vec<char>, groups: &Vec<u32>) -> bool {
+fn is_valid_permutation(conditions: &Vec<char>, groups: &Vec<u32>, permutation: usize) -> bool {
     // println!("Perm: {:?}, Groups: {:?}", permutation, groups);
     let mut contiguous_damaged_springs: u32 = 0;
+    let mut question_mark_count: u32 = 0;
     let mut group_iter = groups.iter();
-    for spring in permutation {
+    for mut spring in conditions {
+        if *spring == '?' {
+            let bit = permutation & (1 << question_mark_count);
+            question_mark_count += 1;
+            spring = if bit > 0 { &'.' } else { &'#' };
+        }
         match spring {
             '#' => contiguous_damaged_springs += 1,
             '.' => {
@@ -74,15 +80,9 @@ fn part1(input: &str) -> usize {
                 .filter_map(|(i, spring)| (*spring == '?').then_some(i))
                 .collect::<Vec<_>>();
 
-            (0..(2_u32.pow(unknown_indices.len() as u32)))
+            (0..(2_usize.pow(unknown_indices.len() as u32)))
                 .filter_map(|permutation| {
-                    let mut condition_permutation = conditions.clone();
-
-                    for (i, index) in unknown_indices.iter().enumerate() {
-                        let bit = permutation & (1 << i as u32);
-                        condition_permutation[*index] = if bit > 0 { '.' } else { '#' };
-                    }
-                    is_valid_permutation(&condition_permutation, &groups).then_some(1)
+                    is_valid_permutation(&conditions, &groups, permutation).then_some(1)
                 })
                 .count()
         })
