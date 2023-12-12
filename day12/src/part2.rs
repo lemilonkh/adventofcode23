@@ -5,14 +5,14 @@ use std::str::FromStr;
 use nom::{
     bytes::complete::tag,
     character::complete::{digit1, one_of, space1},
-    combinator::map_res,
+    combinator::{map_res, recognize},
     multi::{many1, separated_list1},
     sequence::separated_pair,
     IResult,
 };
 
-fn line_parser(i: &str) -> IResult<&str, (Vec<char>, Vec<u32>)> {
-    separated_pair(many1(one_of(".#?")), space1, number_list_parser)(i)
+fn line_parser(i: &str) -> IResult<&str, (&str, Vec<u32>)> {
+    separated_pair(recognize(many1(one_of(".#?"))), space1, number_list_parser)(i)
 }
 
 fn number_list_parser(i: &str) -> IResult<&str, Vec<u32>> {
@@ -23,16 +23,16 @@ fn int_parser(i: &str) -> IResult<&str, u32> {
     map_res(digit1, FromStr::from_str)(i)
 }
 
-fn is_valid_permutation(conditions: &Vec<char>, groups: &Vec<u32>, permutation: usize) -> bool {
+fn is_valid_permutation(conditions: &str, groups: &Vec<u32>, permutation: usize) -> bool {
     // println!("Perm: {:?}, Groups: {:?}", permutation, groups);
     let mut contiguous_damaged_springs: u32 = 0;
     let mut question_mark_count: u32 = 0;
     let mut group_iter = groups.iter();
-    for mut spring in conditions {
-        if *spring == '?' {
+    for mut spring in conditions.chars() {
+        if spring == '?' {
             let bit = permutation & (1 << question_mark_count);
             question_mark_count += 1;
-            spring = if bit > 0 { &'.' } else { &'#' };
+            spring = if bit > 0 { '.' } else { '#' };
         }
         match spring {
             '#' => contiguous_damaged_springs += 1,
@@ -73,13 +73,8 @@ fn part1(input: &str) -> usize {
         .collect::<Vec<_>>();
 
     rows.into_iter()
-        .map(|(mut conditions, groups)| {
-            conditions.push('?');
-            let mut conditions = std::iter::repeat(conditions.iter())
-                .take(5)
-                .flatten()
-                .map(|c| *c)
-                .collect::<Vec<_>>();
+        .map(|(conditions, groups)| {
+            let mut conditions = (conditions.to_owned() + "?").repeat(5);
             conditions.pop(); // remove last ?
 
             let groups = std::iter::repeat(groups.iter())
@@ -89,9 +84,8 @@ fn part1(input: &str) -> usize {
                 .collect::<Vec<_>>();
 
             let unknown_indices = conditions
-                .iter()
-                .enumerate()
-                .filter_map(|(i, spring)| (*spring == '?').then_some(i))
+                .char_indices()
+                .filter_map(|(i, spring)| (spring == '?').then_some(i))
                 .collect::<Vec<_>>();
 
             (0..(2_usize.pow(unknown_indices.len() as u32)))
@@ -117,10 +111,7 @@ mod tests {
     #[test]
     fn parse_input() {
         let result = line_parser("???.### 1,1,3").unwrap().1;
-        assert_eq!(
-            result,
-            (vec!('?', '?', '?', '.', '#', '#', '#'), vec!(1, 1, 3)),
-        );
+        assert_eq!(result, ("???.###", vec!(1, 1, 3)),);
     }
 
     #[test]
