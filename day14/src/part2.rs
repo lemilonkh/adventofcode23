@@ -22,7 +22,7 @@ fn part1(input: &str) -> usize {
     let mut cycle_hash: u64 = 0;
     let mut repeating_cycle: u32 = 0;
 
-    for cycle in 0..1_000_000_000_u32 {
+    for cycle in 0..1_000_000_000 {
         let load = (0..width)
             .map(|x| {
                 (0..height)
@@ -132,7 +132,7 @@ fn part1(input: &str) -> usize {
         repeating_cycle, prev_entry.cycle, prev_entry.load
     );
     let cycle_len = repeating_cycle - prev_entry.cycle;
-    let final_offset = (1_000_000_000_u32 - repeating_cycle) % cycle_len;
+    let final_offset = (1_000_000_000 - repeating_cycle) % cycle_len;
     let final_cycle = prev_entry.cycle + final_offset;
     let final_entry = history
         .values()
