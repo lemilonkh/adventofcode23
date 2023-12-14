@@ -36,7 +36,7 @@ fn part1(input: &str) -> usize {
             .iter()
             .map(|row| row.iter().collect::<String>() + "\n")
             .collect();
-        println!("{}", board);
+        // println!("{}", board);
 
         let mut hasher = DefaultHasher::new();
         hasher.write(board.as_bytes());
@@ -135,11 +135,11 @@ fn part1(input: &str) -> usize {
     let final_offset = (1_000_000_000_u32 - repeating_cycle) % cycle_len;
     let final_cycle = prev_entry.cycle + final_offset;
     let final_entry = history
-        .iter()
-        .find(|(_hash, entry)| entry.cycle == final_cycle)
-        .expect("found final cycle entry")
-        .1;
+        .values()
+        .find(|entry| entry.cycle == final_cycle)
+        .expect("found final cycle entry");
     println!("Final entry {:?}", final_entry);
+
     final_entry.load
 }
 
