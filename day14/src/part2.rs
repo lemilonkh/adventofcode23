@@ -141,21 +141,6 @@ fn part1(input: &str) -> usize {
         .1;
     println!("Final entry {:?}", final_entry);
     final_entry.load
-
-    // println!("### FINAL ###");
-    // let board: String = grid
-    //     .iter()
-    //     .map(|row| row.iter().collect::<String>() + "\n")
-    //     .collect();
-    // println!("{}", board);
-
-    // (0..width)
-    //     .map(|x| {
-    //         (0..height)
-    //             .map(|y| if grid[y][x] == 'O' { height - y } else { 0 })
-    //             .sum::<usize>()
-    //     })
-    //     .sum::<usize>()
 }
 
 fn main() {
