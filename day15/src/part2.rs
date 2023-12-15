@@ -43,6 +43,8 @@ fn part1(input: &str) -> usize {
             } else {
                 lenses.push(lens);
             }
+        } else {
+            eprintln!("Invalid step: {}", step);
         }
     }
 
