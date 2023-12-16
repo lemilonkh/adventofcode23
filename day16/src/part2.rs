@@ -93,6 +93,12 @@ fn shoot_laser(
     }
 }
 
+fn clear_grid(status_grid: &mut Vec<Vec<u32>>) {
+    for row in status_grid.iter_mut() {
+        row.fill(0);
+    }
+}
+
 fn count_energized_tiles(status_grid: &Vec<Vec<u32>>) -> u32 {
     // println!();
     status_grid
@@ -117,30 +123,37 @@ fn part1(input: &str) -> u32 {
 
     let width = grid[0].len();
     let height = grid.len();
+    let mut status_grid: Vec<Vec<u32>> = vec![vec![0; width]; height];
 
-    let horizontal_max_tiles = (0..width as i32).map(|x| {
-        let mut status_grid: Vec<Vec<u32>> = vec![vec![0; width]; height];
-        shoot_laser(&grid, &mut status_grid, SOUTH, (x, 0));
-        let tiles1 = count_energized_tiles(&status_grid);
+    let horizontal_max_tiles = (0..width as i32)
+        .map(|x| {
+            clear_grid(&mut status_grid);
+            shoot_laser(&grid, &mut status_grid, SOUTH, (x, 0));
+            let tiles1 = count_energized_tiles(&status_grid);
 
-        let mut status_grid: Vec<Vec<u32>> = vec![vec![0; width]; height];
-        shoot_laser(&grid, &mut status_grid, NORTH, (x, height as i32 - 1));
-        let tiles2 = count_energized_tiles(&status_grid);
+            clear_grid(&mut status_grid);
+            shoot_laser(&grid, &mut status_grid, NORTH, (x, height as i32 - 1));
+            let tiles2 = count_energized_tiles(&status_grid);
 
-        max(tiles1, tiles2)
-    }).max().expect("found max");
+            max(tiles1, tiles2)
+        })
+        .max()
+        .expect("found max");
 
-    let vertical_max_tiles = (0..width as i32).map(|y| {
-        let mut status_grid: Vec<Vec<u32>> = vec![vec![0; width]; height];
-        shoot_laser(&grid, &mut status_grid, EAST, (0, y));
-        let tiles1 = count_energized_tiles(&status_grid);
+    let vertical_max_tiles = (0..width as i32)
+        .map(|y| {
+            clear_grid(&mut status_grid);
+            shoot_laser(&grid, &mut status_grid, EAST, (0, y));
+            let tiles1 = count_energized_tiles(&status_grid);
 
-        let mut status_grid: Vec<Vec<u32>> = vec![vec![0; width]; height];
-        shoot_laser(&grid, &mut status_grid, WEST, (width as i32 - 1, y));
-        let tiles2 = count_energized_tiles(&status_grid);
+            clear_grid(&mut status_grid);
+            shoot_laser(&grid, &mut status_grid, WEST, (width as i32 - 1, y));
+            let tiles2 = count_energized_tiles(&status_grid);
 
-        max(tiles1, tiles2)
-    }).max().expect("found max");
+            max(tiles1, tiles2)
+        })
+        .max()
+        .expect("found max");
 
     max(horizontal_max_tiles, vertical_max_tiles)
 }
