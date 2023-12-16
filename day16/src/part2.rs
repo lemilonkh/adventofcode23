@@ -94,7 +94,7 @@ fn shoot_laser(
 }
 
 fn clear_grid(status_grid: &mut Vec<Vec<u32>>) {
-    for row in status_grid.iter_mut() {
+    for row in status_grid {
         row.fill(0);
     }
 }
