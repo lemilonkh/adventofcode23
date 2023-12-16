@@ -140,7 +140,7 @@ fn part1(input: &str) -> u32 {
         .max()
         .expect("found max");
 
-    let vertical_max_tiles = (0..width as i32)
+    let vertical_max_tiles = (0..height as i32)
         .map(|y| {
             clear_grid(&mut status_grid);
             shoot_laser(&grid, &mut status_grid, EAST, (0, y));
