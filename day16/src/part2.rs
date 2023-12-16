@@ -1,3 +1,6 @@
+use std::cmp::max;
+use Direction::*;
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 enum Direction {
     NORTH,
@@ -5,9 +8,6 @@ enum Direction {
     SOUTH,
     WEST,
 }
-use std::cmp::max;
-
-use Direction::*;
 
 impl Direction {
     fn delta(&self) -> (i32, i32) {
@@ -46,12 +46,12 @@ fn shoot_laser(
 
     while is_in_bounds(position, width, height) {
         if (status_grid[position.1 as usize][position.0 as usize] & direction.bit()) > 0 {
-            println!("Been there before, stopping!");
+            // println!("Been there before, stopping!");
             break;
         }
         status_grid[position.1 as usize][position.0 as usize] |= direction.bit();
         let tile = grid[position.1 as usize][position.0 as usize];
-        println!("At {:?} going {:?} found {}", position, direction, tile);
+        // println!("At {:?} going {:?} found {}", position, direction, tile);
 
         match tile {
             '.' => {}
@@ -73,14 +73,14 @@ fn shoot_laser(
             }
             '|' => {
                 if direction == EAST || direction == WEST {
-                    println!("Splitting vertically!");
+                    // println!("Splitting vertically!");
                     direction = NORTH;
                     shoot_laser(grid, status_grid, SOUTH, (position.0, position.1 + 1));
                 }
             }
             '-' => {
                 if direction == NORTH || direction == SOUTH {
-                    println!("Splitting horizontally!");
+                    // println!("Splitting horizontally!");
                     direction = WEST;
                     shoot_laser(grid, status_grid, EAST, (position.0 + 1, position.1));
                 }
@@ -94,16 +94,17 @@ fn shoot_laser(
 }
 
 fn count_energized_tiles(status_grid: &Vec<Vec<u32>>) -> u32 {
+    // println!();
     status_grid
         .iter()
-        .inspect(|row| {
+        /*.inspect(|row| {
             println!(
                 "{}",
                 row.iter()
                     .map(|s| if *s > 0 { '#' } else { '.' })
                     .collect::<String>()
             )
-        })
+        })*/
         .map(|row| row.iter().map(|s| (*s > 0) as u32).sum::<u32>())
         .sum()
 }
