@@ -11,4 +11,5 @@ strum = "0.25"
 strum_macros = "0.25"
 itertools = "0.12"
 cached = "0.46"
+array2d = "0.3.1"
 

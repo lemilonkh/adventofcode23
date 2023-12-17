@@ -21,6 +21,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
+name = "array2d"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94ad5242bab1ff9b496507236c8b8f47d5ba476a37aade93b2ebe60093b3c065"
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,6 +181,16 @@ version = "0.1.0"
 [[package]]
 name = "day16"
 version = "0.1.0"
+
+[[package]]
+name = "day17"
+version = "0.1.0"
+dependencies = [
+ "array2d",
+ "cached",
+ "strum",
+ "strum_macros",
+]
 
 [[package]]
 name = "day2"
