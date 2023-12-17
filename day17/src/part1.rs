@@ -130,9 +130,6 @@ fn part1(input: &str) -> Result<u32, Error> {
     )
     .expect("found path");
 
-    // let start_heat_loss = grid.get(0, 0).expect("found heat loss");
-    println!("Found path with length {}: {:?}", heat_loss, path);
-
     for y in 0..height as i32 {
         for x in 0..width as i32 {
             let pos = path.iter().find(|p| p.x == x && p.y == y);
@@ -144,12 +141,6 @@ fn part1(input: &str) -> Result<u32, Error> {
         }
         println!();
     }
-
-    let loss_sum = path
-        .iter()
-        .map(|p| grid.get(p.x as usize, p.y as usize).unwrap())
-        .sum::<u32>();
-    println!("Loss sum: {}", loss_sum);
 
     Ok(heat_loss)
 }
