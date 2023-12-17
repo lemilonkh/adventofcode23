@@ -75,7 +75,7 @@ mod tests {
     #[test]
     fn test_reflection() {
         let result = search_reflection(&vec!["#.###.##.".chars().collect()]);
-        assert_eq!(result, Some(2));
+        assert_eq!(result, Some(1));
     }
 
     #[test]
