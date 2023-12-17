@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use array2d::{Array2D, Error};
 use cached::proc_macro::cached;
 use strum::IntoEnumIterator;
@@ -36,67 +38,70 @@ fn is_in_bounds(position: (i32, i32), width: usize, height: usize) -> bool {
     position.0 >= 0 && position.1 >= 0 && position.0 < width as i32 && position.1 < height as i32
 }
 
-#[cached(key = "String", convert = r#"{format!("{:?}", position)}"#)]
 fn find_path(
-    position: (usize, usize),
+    initial_position: (usize, usize),
     target: (usize, usize),
     grid: &Array2D<u32>,
     status_grid: &mut Array2D<u32>,
-    prev_direction: Direction,
-    prev_count: u32,
 ) -> u32 {
-    println!(
-        "At {:?} prev dir {:?} with count {}",
-        position, prev_direction, prev_count
-    );
-    if position == target {
-        return *grid.get(position.0, position.1).expect("found value");
+    let stack: VecDeque<(usize, usize)> = VecDeque::new();
+    stack.push_back(initial_position);
+
+    while !stack.is_empty() {
+        let position = stack.pop_front().expect("found next position");
+
+        let mut heat_loss;
+        let status = *status_grid
+            .get(initial_position.0, initial_position.1)
+            .expect("found status");
+        if status > 0 {
+            status
+        } else {
+            for direction in Direction::iter() {
+                // if direction == prev_direction.opposite() {
+                //     return None;
+                // }
+                // let direction_count = if direction == prev_direction {
+                //     prev_count + 1
+                // } else {
+                //     0
+                // };
+
+                // go max 3 times in the same direction
+                // if direction_count > 2 {
+                //     return None;
+                // }
+                let delta = direction.delta();
+                let new_pos = (
+                    initial_position.0 as i32 + delta.0,
+                    initial_position.1 as i32 + delta.1,
+                );
+                if is_in_bounds(new_pos, grid.num_columns(), grid.num_rows()) {
+                    stack.push_back((new_pos.0 as usize, new_pos.1 as usize));
+                }
+            }
+        }
     }
 
-    let status = *status_grid
-        .get(position.0, position.1)
-        .expect("found status");
-    if status > 0 {
-        return status;
+    // println!(
+    //     "At {:?} prev dir {:?} with count {}",
+    //     initial_position, prev_direction, prev_count
+    // );
+    if initial_position == target {
+        return *grid
+            .get(initial_position.0, initial_position.1)
+            .expect("found value");
     }
 
-    let heat_loss = Direction::iter()
-        .filter_map(|direction| {
-            if direction == prev_direction.opposite() {
-                return None;
-            }
-            let direction_count = if direction == prev_direction {
-                prev_count + 1
-            } else {
-                0
-            };
-
-            // go max 3 times into the same direction
-            if direction_count > 2 {
-                return None;
-            }
-            let delta = direction.delta();
-            let new_pos = (position.0 as i32 + delta.0, position.1 as i32 + delta.1);
-            if !is_in_bounds(new_pos, grid.num_columns(), grid.num_rows()) {
-                return None;
-            }
-
-            let heat_loss = find_path(
-                (new_pos.0 as usize, new_pos.1 as usize),
-                target,
-                grid,
-                status_grid,
-                direction,
-                direction_count,
-            );
-            Some(heat_loss)
-        })
-        .min()
-        .expect("found minimum heat loss");
-
-    let current_tile = *grid.get(position.0, position.1).expect("found value");
+    let current_tile = *grid
+        .get(initial_position.0, initial_position.1)
+        .expect("found value");
     status_grid
-        .set(position.0, position.1, heat_loss + current_tile)
+        .set(
+            initial_position.0,
+            initial_position.1,
+            heat_loss + current_tile,
+        )
         .expect("can write status");
     return heat_loss + current_tile;
 }
