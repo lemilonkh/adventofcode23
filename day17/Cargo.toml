@@ -16,4 +16,5 @@ array2d = {workspace = true}
 cached = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
+pathfinding = { workspace = true }
 
