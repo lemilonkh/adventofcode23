@@ -13,4 +13,5 @@ itertools = "0.12"
 cached = "0.46"
 array2d = "0.3.1"
 pathfinding = "4.6.0"
+polygonical = "0.5.0"
 
