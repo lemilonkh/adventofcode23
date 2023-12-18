@@ -187,10 +187,17 @@ name = "day17"
 version = "0.1.0"
 dependencies = [
  "array2d",
- "cached",
  "pathfinding",
  "strum",
  "strum_macros",
+]
+
+[[package]]
+name = "day18"
+version = "0.1.0"
+dependencies = [
+ "array2d",
+ "nom",
 ]
 
 [[package]]
