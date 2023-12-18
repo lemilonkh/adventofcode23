@@ -1,27 +1,21 @@
 use polygonical::{point::Point, polygon::Polygon};
-use std::str::FromStr;
 
 use nom::{
     bytes::complete::tag,
     character::complete::{alphanumeric1, digit1, one_of, space1},
-    combinator::map_res,
     sequence::{delimited, tuple},
     IResult,
 };
 
-fn line_parser(i: &str) -> IResult<&str, (char, u32, &str)> {
-    let (i, (direction, _, steps, _, color)) = tuple((
+fn line_parser(i: &str) -> IResult<&str, &str> {
+    let (i, (_, _, _, _, color)) = tuple((
         one_of("RDLU"),
         space1,
-        int_parser,
+        digit1,
         space1,
         delimited(tag("(#"), alphanumeric1, tag(")")),
     ))(i)?;
-    Ok((i, (direction, steps, color)))
-}
-
-fn int_parser(i: &str) -> IResult<&str, u32> {
-    map_res(digit1, FromStr::from_str)(i)
+    Ok((i, color))
 }
 
 fn polygon_perimeter(points: &[Point]) -> f64 {
@@ -35,7 +29,7 @@ fn polygon_perimeter(points: &[Point]) -> f64 {
 }
 
 fn part1(input: &str) -> i64 {
-    let lines: Vec<(char, u32, &str)> = input
+    let lines: Vec<&str> = input
         .lines()
         .map(|line| line_parser(line).expect("valid input").1)
         .collect();
@@ -45,7 +39,7 @@ fn part1(input: &str) -> i64 {
 
     points.push(Point::new(position.0, position.1));
 
-    for (_dir, _steps, color) in lines {
+    for color in lines {
         let mut steps_hex = color.to_owned();
         let direction_char = steps_hex.pop().expect("found direction char");
         let direction = match direction_char {
@@ -60,7 +54,10 @@ fn part1(input: &str) -> i64 {
         };
         let steps = i32::from_str_radix(&steps_hex, 16).expect("valid hex number");
 
-        position = (position.0 + direction.0 * steps, position.1 + direction.1 * steps);
+        position = (
+            position.0 + direction.0 * steps,
+            position.1 + direction.1 * steps,
+        );
         points.push(Point::new(position.0, position.1));
         println!("At position {:?}", position);
     }
