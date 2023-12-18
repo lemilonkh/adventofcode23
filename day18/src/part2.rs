@@ -1,8 +1,5 @@
+use polygonical::{point::Point, polygon::Polygon};
 use std::str::FromStr;
-use polygonical::{
-    polygon::Polygon,
-    point::Point,
-};
 
 use nom::{
     bytes::complete::tag,
@@ -61,13 +58,23 @@ fn int_parser(i: &str) -> IResult<&str, u32> {
     map_res(digit1, FromStr::from_str)(i)
 }
 
+fn polygon_perimeter(points: &[Point]) -> f64 {
+    let mut peri = 0.0;
+    for i in 0..points.len() {
+        let j = (i + 1) % points.len();
+        peri += (points[i].x - points[j].x).abs();
+        peri += (points[i].y - points[j].y).abs();
+    }
+    peri
+}
+
 fn part1(input: &str) -> i64 {
     let lines: Vec<(char, u32, &str)> = input
         .lines()
         .map(|line| line_parser(line).expect("valid input").1)
         .collect();
 
-    let mut points: Vec<Point> = vec!();
+    let mut points: Vec<Point> = vec![];
     let mut position = (0, 0);
 
     points.push(Point::new(position.0, position.1));
@@ -93,10 +100,14 @@ fn part1(input: &str) -> i64 {
         println!("At position {:?}", position);
     }
 
+    let perimeter = polygon_perimeter(&points);
+    let half_perimeter = (perimeter / 2.0).floor() + 1.0;
+    println!("Perimeter: {}, half: {}", perimeter, half_perimeter);
+
     let area = Polygon::new(points).area();
     println!("Area: {}", area);
 
-    area.round().abs() as i64
+    area.round().abs() as i64 + half_perimeter.floor().abs() as i64
 }
 
 fn main() {
