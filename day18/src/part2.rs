@@ -1,6 +1,7 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    str::FromStr,
+use std::str::FromStr;
+use polygonical::{
+    polygon::Polygon,
+    point::Point,
 };
 
 use nom::{
@@ -60,50 +61,16 @@ fn int_parser(i: &str) -> IResult<&str, u32> {
     map_res(digit1, FromStr::from_str)(i)
 }
 
-fn flood_fill(
-    start_x: i32,
-    start_y: i32,
-    board: &mut HashMap<(i32, i32), bool>,
-    map_size: i32,
-) {
-    let mut queue = VecDeque::new();
-    queue.push_back((start_x, start_y));
-
-    while !queue.is_empty() {
-        let pos = queue.pop_front().expect("found pos");
-        if board.contains_key(&pos) {
-            continue;
-        }
-
-        board.insert(pos, true);
-        let (x, y) = pos;
-
-        if y > -map_size {
-            queue.push_back((x, y - 1));
-        }
-        if x > -map_size {
-            queue.push_back((x - 1, y));
-        }
-        if y < map_size {
-            queue.push_back((x, y + 1));
-        }
-        if x < map_size {
-            queue.push_back((x + 1, y));
-        }
-    }
-}
-
-fn part1(input: &str) -> usize {
+fn part1(input: &str) -> i64 {
     let lines: Vec<(char, u32, &str)> = input
         .lines()
         .map(|line| line_parser(line).expect("valid input").1)
         .collect();
 
-    let mut board: HashMap<(i32, i32), bool> = HashMap::new();
+    let mut points: Vec<Point> = vec!();
     let mut position = (0, 0);
-    let map_size = 1000000;
 
-    board.insert(position, true);
+    points.push(Point::new(position.0, position.1));
 
     for (_dir, _steps, color) in lines {
         let mut steps_hex = color.to_owned();
@@ -118,31 +85,18 @@ fn part1(input: &str) -> usize {
                 NORTH
             }
         };
-        let steps = i64::from_str_radix(&steps_hex, 16).expect("valid hex number");
+        let steps = i32::from_str_radix(&steps_hex, 16).expect("valid hex number");
 
         let delta = direction.delta();
-        for _step in 0..steps {
-            position = (position.0 + delta.0, position.1 + delta.1);
-            println!("Step {} at {:?}", _step, position);
-            board.entry(position).or_insert(true);
-        }
+        position = (position.0 + delta.0 * steps, position.1 + delta.1 * steps);
+        points.push(Point::new(position.0, position.1));
+        println!("At position {:?}", position);
     }
 
-    flood_fill(
-        position.1 + 1,
-        position.0 + 1,
-        &mut board,
-        map_size,
-    );
+    let area = Polygon::new(points).area();
+    println!("Area: {}", area);
 
-    // for y in 0..height as i32 {
-    //     for x in 0..width as i32 {
-    //         print!("{}", grid.get(y as usize, x as usize).unwrap());
-    //     }
-    //     println!();
-    // }
-
-    board.len()
+    area.round().abs() as i64
 }
 
 fn main() {
@@ -157,6 +111,6 @@ mod tests {
     #[test]
     fn it_works() {
         let result = part1(include_str!("input1_test.txt"));
-        assert_eq!(result, 62);
+        assert_eq!(result, 952408144115);
     }
 }
