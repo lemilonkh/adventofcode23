@@ -9,40 +9,6 @@ use nom::{
     IResult,
 };
 
-use Direction::*;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-enum Direction {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST,
-}
-
-impl Direction {
-    fn delta(&self) -> (i32, i32) {
-        match self {
-            NORTH => (0, -1),
-            EAST => (1, 0),
-            SOUTH => (0, 1),
-            WEST => (-1, 0),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialOrd, Ord)]
-struct Pos {
-    x: i32,
-    y: i32,
-    direction: Direction,
-    count: u32,
-}
-impl PartialEq for Pos {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-
 fn line_parser(i: &str) -> IResult<&str, (char, u32, &str)> {
     let (i, (direction, _, steps, _, color)) = tuple((
         one_of("RDLU"),
@@ -106,19 +72,18 @@ fn part1(input: &str) -> Result<u32, Error> {
 
     for (dir, steps, _color) in lines {
         let direction = match dir {
-            'R' => EAST,
-            'L' => WEST,
-            'U' => NORTH,
-            'D' => SOUTH,
+            'R' => (1, 0),
+            'L' => (-1, 0),
+            'U' => (0, -1),
+            'D' => (0, 1),
             _ => {
                 eprintln!("Invalid input! {}", dir);
-                NORTH
+                (0, 0)
             }
         };
 
-        let delta = direction.delta();
         for _step in 0..steps {
-            position = (position.0 + delta.0, position.1 + delta.1);
+            position = (position.0 + direction.0, position.1 + direction.1);
             // println!("Step {} at {:?}", _step, position);
             grid.set(position.1 as usize, position.0 as usize, '#')?;
         }

@@ -9,40 +9,6 @@ use nom::{
     IResult,
 };
 
-use Direction::*;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-enum Direction {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST,
-}
-
-impl Direction {
-    fn delta(&self) -> (i32, i32) {
-        match self {
-            NORTH => (0, -1),
-            EAST => (1, 0),
-            SOUTH => (0, 1),
-            WEST => (-1, 0),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialOrd, Ord)]
-struct Pos {
-    x: i32,
-    y: i32,
-    direction: Direction,
-    count: u32,
-}
-impl PartialEq for Pos {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-
 fn line_parser(i: &str) -> IResult<&str, (char, u32, &str)> {
     let (i, (direction, _, steps, _, color)) = tuple((
         one_of("RDLU"),
@@ -83,19 +49,18 @@ fn part1(input: &str) -> i64 {
         let mut steps_hex = color.to_owned();
         let direction_char = steps_hex.pop().expect("found direction char");
         let direction = match direction_char {
-            '0' => EAST,
-            '2' => WEST,
-            '3' => NORTH,
-            '1' => SOUTH,
+            '0' => (1, 0),
+            '2' => (-1, 0),
+            '3' => (0, -1),
+            '1' => (0, 1),
             _ => {
                 eprintln!("Invalid input! {}", direction_char);
-                NORTH
+                (0, 0)
             }
         };
         let steps = i32::from_str_radix(&steps_hex, 16).expect("valid hex number");
 
-        let delta = direction.delta();
-        position = (position.0 + delta.0 * steps, position.1 + delta.1 * steps);
+        position = (position.0 + direction.0 * steps, position.1 + direction.1 * steps);
         points.push(Point::new(position.0, position.1));
         println!("At position {:?}", position);
     }
