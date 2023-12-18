@@ -19,13 +19,13 @@ fn line_parser(i: &str) -> IResult<&str, &str> {
 }
 
 fn polygon_perimeter(points: &[Point]) -> f64 {
-    let mut peri = 0.0;
+    let mut perimeter = 0.0;
     for i in 0..points.len() {
         let j = (i + 1) % points.len();
-        peri += (points[i].x - points[j].x).abs();
-        peri += (points[i].y - points[j].y).abs();
+        perimeter += (points[i].x - points[j].x).abs();
+        perimeter += (points[i].y - points[j].y).abs();
     }
-    peri
+    perimeter
 }
 
 fn part1(input: &str) -> i64 {
@@ -69,7 +69,7 @@ fn part1(input: &str) -> i64 {
     let area = Polygon::new(points).area();
     println!("Area: {}", area);
 
-    area.round().abs() as i64 + half_perimeter.floor().abs() as i64
+    area.round().abs() as i64 + half_perimeter.abs() as i64
 }
 
 fn main() {
