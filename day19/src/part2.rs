@@ -13,12 +13,12 @@ use nom::{
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-struct Part {
+struct PartRange {
     min: [u64; 4],
     max: [u64; 4],
 }
 
-impl Default for Part {
+impl Default for PartRange {
     fn default() -> Self {
         Self {
             min: [1, 1, 1, 1],
@@ -83,7 +83,7 @@ fn part1(input: &str) -> u64 {
         .collect();
 
     let mut queue = VecDeque::new();
-    queue.push_back(("in", Part::default()));
+    queue.push_back(("in", PartRange::default()));
     let mut accepted_parts = vec![];
 
     while !queue.is_empty() {
