@@ -5,7 +5,6 @@ use std::{
 };
 
 use nom::{
-    bytes::complete::tag,
     character::complete::{alpha1, char, digit1, one_of},
     combinator::{map_res, opt},
     multi::separated_list1,
@@ -40,14 +39,14 @@ struct Rule<'a> {
 fn workflow_parser(i: &str) -> IResult<&str, (&str, Vec<Rule>)> {
     let (i, (name, rules)) = tuple((
         alpha1,
-        delimited(tag("{"), separated_list1(char(','), rule_parser), tag("}")),
+        delimited(char('{'), separated_list1(char(','), rule_parser), char('}')),
     ))(i)?;
     Ok((i, (name, rules)))
 }
 
 fn rule_parser(i: &str) -> IResult<&str, Rule> {
     let (i, (parts, target)) = pair(
-        opt(tuple((alpha1, one_of("<>"), int_parser, tag(":")))),
+        opt(tuple((alpha1, one_of("<>"), int_parser, char(':')))),
         alpha1,
     )(i)?;
 
