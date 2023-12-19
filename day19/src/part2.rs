@@ -15,27 +15,15 @@ use nom::{
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct Part {
-    x_min: u64,
-    x_max: u64,
-    m_min: u64,
-    m_max: u64,
-    a_min: u64,
-    a_max: u64,
-    s_min: u64,
-    s_max: u64,
+    min: [u64; 4],
+    max: [u64; 4],
 }
 
 impl Default for Part {
     fn default() -> Self {
         Self {
-            x_min: 1,
-            x_max: 4000,
-            m_min: 1,
-            m_max: 4000,
-            a_min: 1,
-            a_max: 4000,
-            s_min: 1,
-            s_max: 4000,
+            min: [1, 1, 1, 1],
+            max: [4000, 4000, 4000, 4000],
         }
     }
 }
@@ -119,51 +107,16 @@ fn part1(input: &str) -> u64 {
                 break;
             }
 
+            let stat = "xmas".find(rule.stat).expect("valid stat");
+
             if rule.is_gt {
-                match rule.stat {
-                    'x' => {
-                        current_part.x_min = max(current_part.x_min, rule.value + 1);
-                        next_part.x_max = min(next_part.x_max, rule.value);
-                    }
-                    'm' => {
-                        current_part.m_min = max(current_part.m_min, rule.value + 1);
-                        next_part.m_max = min(next_part.m_max, rule.value);
-                    }
-                    'a' => {
-                        current_part.a_min = max(current_part.a_min, rule.value + 1);
-                        next_part.a_max = min(next_part.a_max, rule.value);
-                    }
-                    's' => {
-                        current_part.s_min = max(current_part.s_min, rule.value + 1);
-                        next_part.s_max = min(next_part.s_max, rule.value);
-                    }
-                    _ => {
-                        eprintln!("Invalid stat {}", rule.stat);
-                    }
-                };
+                current_part.min[stat] = max(current_part.min[stat], rule.value + 1);
+                next_part.max[stat] = min(next_part.max[stat], rule.value);
             } else {
-                match rule.stat {
-                    'x' => {
-                        current_part.x_max = min(current_part.x_max, rule.value - 1);
-                        next_part.x_min = max(next_part.x_min, rule.value);
-                    }
-                    'm' => {
-                        current_part.m_max = min(current_part.m_max, rule.value - 1);
-                        next_part.m_min = max(next_part.m_min, rule.value);
-                    }
-                    'a' => {
-                        current_part.a_max = min(current_part.a_max, rule.value - 1);
-                        next_part.a_min = max(next_part.a_min, rule.value);
-                    }
-                    's' => {
-                        current_part.s_max = min(current_part.s_max, rule.value - 1);
-                        next_part.s_min = max(next_part.s_min, rule.value);
-                    }
-                    _ => {
-                        eprintln!("Invalid stat {}", rule.stat);
-                    }
-                };
+                current_part.max[stat] = min(current_part.max[stat], rule.value - 1);
+                next_part.min[stat] = max(next_part.min[stat], rule.value);
             }
+
             queue.push_back((rule.target, current_part));
             current_part = next_part.clone();
         }
@@ -172,10 +125,9 @@ fn part1(input: &str) -> u64 {
     accepted_parts
         .iter()
         .map(|part| {
-            (part.x_max - part.x_min + 1)
-                * (part.m_max - part.m_min + 1)
-                * (part.a_max - part.a_min + 1)
-                * (part.s_max - part.s_min + 1)
+            (0..4)
+                .map(|i| part.max[i] - part.min[i] + 1)
+                .product::<u64>()
         })
         .sum()
 }
