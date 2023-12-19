@@ -103,7 +103,7 @@ fn part1(input: &str) -> u64 {
 
         let rules = workflows.get(current_workflow).expect("workflow found");
         let mut current_part = part.clone();
-        let mut next_part = part.clone();
+        let mut next_part = part;
         for rule in rules {
             if rule.is_fallback {
                 queue.push_back((rule.target, current_part));
