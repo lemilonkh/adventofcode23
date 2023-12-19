@@ -12,7 +12,7 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone)]
 struct PartRange {
     min: [u64; 4],
     max: [u64; 4],
