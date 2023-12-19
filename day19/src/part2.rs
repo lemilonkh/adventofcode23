@@ -39,7 +39,11 @@ struct Rule<'a> {
 fn workflow_parser(i: &str) -> IResult<&str, (&str, Vec<Rule>)> {
     let (i, (name, rules)) = tuple((
         alpha1,
-        delimited(char('{'), separated_list1(char(','), rule_parser), char('}')),
+        delimited(
+            char('{'),
+            separated_list1(char(','), rule_parser),
+            char('}'),
+        ),
     ))(i)?;
     Ok((i, (name, rules)))
 }
@@ -88,7 +92,7 @@ fn part1(input: &str) -> u64 {
 
     while !queue.is_empty() {
         let (current_workflow, part) = queue.pop_front().unwrap();
-        println!("Workflow: {}, Part range: {:?}", current_workflow, part);
+        println!("Workflow: {}, {:?}", current_workflow, part);
 
         if current_workflow == "A" {
             accepted_parts.push(part);
@@ -108,6 +112,8 @@ fn part1(input: &str) -> u64 {
 
             let stat = "xmas".find(rule.stat).expect("valid stat");
 
+            // make criteria for min and max values more precise based on current rule
+            // the next rule is dependant on the current rule not applying, so make its min/ max more precise as well
             if rule.is_gt {
                 current_part.min[stat] = max(current_part.min[stat], rule.value + 1);
                 next_part.max[stat] = min(next_part.max[stat], rule.value);
@@ -125,7 +131,7 @@ fn part1(input: &str) -> u64 {
         .iter()
         .map(|part| {
             (0..4)
-                .map(|i| part.max[i] - part.min[i] + 1)
+                .map(|i| part.max[i] - part.min[i] + 1) // inclusive range
                 .product::<u64>()
         })
         .sum()
