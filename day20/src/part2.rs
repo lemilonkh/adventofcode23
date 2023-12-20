@@ -123,6 +123,7 @@ fn part1(input: &str) -> u64 {
     while group_cycles.len() < groups.len() {
         let mut queue = VecDeque::new();
         queue.push_back((false, "roadcaster", "")); // button press
+
         /*println!(
             "Iteration {}, FlipFlops {}, {}",
             i,
@@ -132,6 +133,7 @@ fn part1(input: &str) -> u64 {
                 .collect::<String>(),
             flip_flop_state.len()
         );*/
+
         for (&group_name, group_modules) in groups.iter() {
             if group_cycles.contains_key(group_name) {
                 continue;
@@ -140,14 +142,8 @@ fn part1(input: &str) -> u64 {
             // concat binary number from flip flop states
             let history_entry = group_modules
                 .iter()
-                .map(|&module_name| {
-                    *flip_flop_state.get(module_name).unwrap_or(&false)
-                })
-                .fold(0, |mut acc, s| {
-                    acc <<= 1;
-                    acc |= s as u64;
-                    acc
-                });
+                .map(|&module_name| *flip_flop_state.get(module_name).unwrap_or(&false))
+                .fold(0, |acc, s| (acc << 1) | s as u64);
 
             let history = group_histories.get_mut(group_name).unwrap();
             if history.contains(&history_entry) {
