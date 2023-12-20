@@ -123,7 +123,7 @@ fn part1(input: &str) -> u64 {
     while group_cycles.len() < groups.len() {
         let mut queue = VecDeque::new();
         queue.push_back((false, "roadcaster", "")); // button press
-        println!(
+        /*println!(
             "Iteration {}, FlipFlops {}, {}",
             i,
             flip_flop_state
@@ -131,7 +131,7 @@ fn part1(input: &str) -> u64 {
                 .map(|s| if *s { '1' } else { '0' })
                 .collect::<String>(),
             flip_flop_state.len()
-        );
+        );*/
         for (&group_name, group_modules) in groups.iter() {
             if group_cycles.contains_key(group_name) {
                 continue;
