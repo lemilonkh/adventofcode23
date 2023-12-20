@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 use nom::{
     bytes::complete::tag,
@@ -7,7 +7,6 @@ use nom::{
     sequence::tuple,
     IResult,
 };
-use num::integer::lcm;
 
 #[derive(Debug, PartialEq, Eq)]
 enum ModuleType {
@@ -81,10 +80,47 @@ fn part1(input: &str) -> u64 {
         }
     }
 
-    let mut flip_flop_cycles: BTreeMap<&str, u64> = BTreeMap::new();
+    // all flip flops reachable from the network root module
+    let mut groups: BTreeMap<&str, HashSet<&str>> = BTreeMap::new();
+    let mut queue = VecDeque::new();
+    let mut visited: Vec<&str> = vec![];
+    queue.push_back(("roadcaster", None));
+
+    while !queue.is_empty() {
+        let (name, group) = queue.pop_front().unwrap();
+        visited.push(name);
+        if !modules.contains_key(name) {
+            continue;
+        }
+        let module = modules.get(name).unwrap();
+        if module.module_type == ModuleType::FlipFlop {
+            groups
+                .entry(group.unwrap()) // safe because there are no flip flops at top level
+                .or_insert(HashSet::new())
+                .insert(name);
+        }
+        for connection_name in module.connections.iter() {
+            let group = group.unwrap_or(connection_name);
+
+            if !visited.contains(connection_name) {
+                queue.push_back((connection_name, Some(group)));
+            }
+        }
+    }
+
+    println!("Groups {:?}", groups);
+
+    // network root module name to history of hashes
+    let mut group_histories: BTreeMap<&str, Vec<String>> = BTreeMap::new();
+    // network root module name to length of cycle
+    let mut group_cycles: BTreeMap<&str, u64> = BTreeMap::new();
     let mut i = 0;
 
-    while flip_flop_cycles.len() < flip_flop_state.len() {
+    for &group_name in groups.keys() {
+        group_histories.insert(group_name, vec![]);
+    }
+
+    while group_cycles.len() < groups.len() {
         let mut queue = VecDeque::new();
         queue.push_back((false, "roadcaster", "")); // button press
         println!(
@@ -96,6 +132,30 @@ fn part1(input: &str) -> u64 {
                 .collect::<String>(),
             flip_flop_state.len()
         );
+        for (&group_name, group_modules) in groups.iter() {
+            if group_cycles.contains_key(group_name) {
+                continue;
+            }
+
+            let history_entry = group_modules
+                .iter()
+                .map(|&module_name| {
+                    let state = *flip_flop_state.get(module_name).unwrap_or(&false);
+                    if state {
+                        '1'
+                    } else {
+                        '0'
+                    }
+                })
+                .collect::<String>();
+
+            let history = group_histories.get_mut(group_name).unwrap();
+            if history.contains(&history_entry) {
+                group_cycles.insert(group_name, i);
+            }
+
+            history.push(history_entry);
+        }
 
         while !queue.is_empty() {
             let (is_high, name, prev_name) = queue.pop_front().unwrap();
@@ -117,7 +177,6 @@ fn part1(input: &str) -> u64 {
                     if !is_high {
                         let prev_state = *flip_flop_state.entry(name).or_insert(false);
                         flip_flop_state.insert(name, !prev_state);
-                        flip_flop_cycles.entry(name).or_insert(i + 1);
                         pulse_type = !prev_state;
                     } else {
                         continue; // don't send output pulse for high input
@@ -139,59 +198,9 @@ fn part1(input: &str) -> u64 {
         i += 1;
     }
 
-    println!("Cycles {:?}", flip_flop_cycles);
-
-    let mut cycle_pairs = Vec::from_iter(flip_flop_cycles.into_iter());
-    cycle_pairs.sort_by_key(|(_name, cycle)| *cycle);
-    cycle_pairs.dedup_by_key(|(_name, cycle)| *cycle);
-
-    // determine correct combination to send low pulse to rx
-    let mut module_inputs: HashMap<&str, Vec<&str>> = HashMap::new();
-    for module in modules.values() {
-        for connection_name in module.connections.iter() {
-            module_inputs
-                .entry(connection_name)
-                .or_insert(vec![])
-                .push(module.name);
-        }
-    }
-
-    let mut queue = VecDeque::new();
-    queue.push_back((Some(false), "rx"));
-    let mut flip_flop_values: BTreeMap<&str, Option<bool>> = BTreeMap::new();
-
-    while !queue.is_empty() {
-        let (is_high, name) = queue.pop_front().unwrap();
-        if module_inputs.contains_key(name) {
-            for input_name in module_inputs.get(name).unwrap() {
-                let module = modules.get(input_name).expect("found module");
-
-                match module.module_type {
-                    ModuleType::Broadcaster => continue,
-                    ModuleType::FlipFlop => {
-                        flip_flop_values.insert(input_name, is_high);
-                        // TODO only one of the inputs needs to have emitted a pulse => try out combinations?
-                        queue.push_back((Some(false), input_name));
-                    }
-                    ModuleType::Nand => {
-                        if is_high.is_some() {
-                            if is_high.unwrap() {
-                                queue.push_back((Some(true), input_name));
-                            } else {
-                                queue.push_back((None, input_name));
-                            }
-                        } else {
-                            queue.push_back((None, input_name));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    println!("Values {:?}", flip_flop_values);
-
-    todo!()
+    // rx is activated when all groups repeat at the same time (so they all have sent out a high pulse last)
+    println!("Group cycles {:?}", group_cycles);
+    group_cycles.values().product()
 }
 
 fn main() {
@@ -207,9 +216,9 @@ mod tests {
     #[test]
     fn it_works() {
         let result = part1(include_str!("input1_test.txt"));
-        assert_eq!(result, 32000000);
+        assert_eq!(result, 1);
         let result = part1(include_str!("input2_test.txt"));
-        assert_eq!(result, 11687500);
+        assert_eq!(result, 4);
     }
 
     #[test]
