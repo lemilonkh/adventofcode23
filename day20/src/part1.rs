@@ -56,6 +56,7 @@ fn part1(input: &str) -> u64 {
     let mut flip_flop_state: HashMap<&str, bool> = HashMap::new();
     let mut nand_state: HashMap<&str, HashMap<&str, bool>> = HashMap::new();
 
+    // init nand states (find all input connections)
     let nand_names = modules
         .iter()
         .filter_map(|(name, m)| (m.module_type == ModuleType::Nand).then_some(name))
