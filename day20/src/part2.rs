@@ -181,7 +181,7 @@ fn part1(input: &str) -> u64 {
                 ModuleType::Nand => {
                     let state = nand_state.get_mut(name).unwrap();
                     state.insert(prev_name, is_high);
-                    let result = state.values().fold(true, |acc, s| acc & *s); // AND all inputs
+                    let result = state.values().fold(true, |acc, s| acc && *s); // AND all inputs
                     pulse_type = !result; // NOT
                 }
             }
