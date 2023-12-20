@@ -111,7 +111,7 @@ fn part1(input: &str) -> u64 {
     println!("Groups {:?}", groups);
 
     // network root module name to history of hashes
-    let mut group_histories: BTreeMap<&str, Vec<String>> = BTreeMap::new();
+    let mut group_histories: BTreeMap<&str, Vec<u64>> = BTreeMap::new();
     // network root module name to length of cycle
     let mut group_cycles: BTreeMap<&str, u64> = BTreeMap::new();
     let mut i = 0;
@@ -137,17 +137,17 @@ fn part1(input: &str) -> u64 {
                 continue;
             }
 
+            // concat binary number from flip flop states
             let history_entry = group_modules
                 .iter()
                 .map(|&module_name| {
-                    let state = *flip_flop_state.get(module_name).unwrap_or(&false);
-                    if state {
-                        '1'
-                    } else {
-                        '0'
-                    }
+                    *flip_flop_state.get(module_name).unwrap_or(&false)
                 })
-                .collect::<String>();
+                .fold(0, |mut acc, s| {
+                    acc <<= 1;
+                    acc |= s as u64;
+                    acc
+                });
 
             let history = group_histories.get_mut(group_name).unwrap();
             if history.contains(&history_entry) {
