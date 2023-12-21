@@ -15,5 +15,5 @@ path = "src/part2.rs"
 array2d = {workspace = true}
 strum = { workspace = true }
 strum_macros = { workspace = true }
-pathfinding = { workspace = true }
+rstest = { workspace = true }
 
