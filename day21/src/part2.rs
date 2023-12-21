@@ -36,21 +36,17 @@ impl PartialEq for Pos {
     }
 }
 
-fn is_in_bounds(position: (i32, i32), width: usize, height: usize) -> bool {
-    position.0 >= 0 && position.1 >= 0 && position.0 < width as i32 && position.1 < height as i32
-}
-
 fn get_successors<'a>(grid: &'a Array2D<u8>, pos: &'a Pos) -> impl Iterator<Item = Pos> + 'a {
     Direction::iter().filter_map(|direction| {
         let delta = direction.delta();
         let new_pos = (pos.x + delta.0, pos.y + delta.1);
-        let in_bounds = is_in_bounds(new_pos, grid.num_columns(), grid.num_rows());
-        if !in_bounds {
-            return None;
-        }
+        let bounds_pos = (
+            new_pos.0.rem_euclid(grid.num_columns() as i32),
+            new_pos.1.rem_euclid(grid.num_rows() as i32),
+        );
 
         let grid_value = *grid
-            .get(new_pos.1 as usize, new_pos.0 as usize)
+            .get(bounds_pos.1 as usize, bounds_pos.0 as usize)
             .expect("found grid tile");
         if grid_value == b'#' {
             return None;
