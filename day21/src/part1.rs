@@ -1,5 +1,6 @@
+use std::collections::VecDeque;
+
 use array2d::{Array2D, Error};
-use pathfinding::directed::astar::astar_bag;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use Direction::*;
@@ -39,11 +40,7 @@ fn is_in_bounds(position: (i32, i32), width: usize, height: usize) -> bool {
     position.0 >= 0 && position.1 >= 0 && position.0 < width as i32 && position.1 < height as i32
 }
 
-fn get_successors(grid: &Array2D<u8>, pos: Pos, max_distance: u32) -> Vec<(Pos, u32)> {
-    if pos.distance >= max_distance {
-        return vec![];
-    }
-
+fn get_successors(grid: &Array2D<u8>, pos: Pos) -> Vec<Pos> {
     Direction::iter()
         .filter_map(|direction| {
             let delta = direction.delta();
@@ -52,21 +49,19 @@ fn get_successors(grid: &Array2D<u8>, pos: Pos, max_distance: u32) -> Vec<(Pos, 
             if !in_bounds {
                 return None;
             }
+
             let grid_value = *grid
                 .get(new_pos.1 as usize, new_pos.0 as usize)
                 .expect("found grid tile");
-
             if grid_value == b'#' {
                 return None;
             }
-            Some((
-                Pos {
-                    x: new_pos.0,
-                    y: new_pos.1,
-                    distance: pos.distance + 1,
-                },
-                1,
-            ))
+
+            Some(Pos {
+                x: new_pos.0,
+                y: new_pos.1,
+                distance: pos.distance + 1,
+            })
         })
         .collect()
 }
@@ -96,16 +91,28 @@ fn part1(input: &str, steps: u32) -> Result<u32, Error> {
         }
     }
 
-    let (paths, _) = astar_bag(
-        &position,
-        |p| get_successors(&grid, *p, steps),
-        // manhattan distance heuristic
-        |p| steps - p.distance as u32,
-        |p| p.distance == steps,
-    )
-    .expect("found paths");
+    let mut queue = VecDeque::new();
+    queue.push_back(position);
 
-    let mut final_steps: Vec<Pos> = paths.map(|path| *path.last().unwrap()).collect();
+    for step in 0..steps {
+        println!("Step {}", step);
+
+        let mut next_steps = VecDeque::new();
+
+        // only handle positions added before this step
+        while !queue.is_empty() {
+            let pos = queue.pop_front().unwrap();
+            for next in get_successors(&grid, pos) {
+                if !next_steps.contains(&next) {
+                    next_steps.push_back(next);
+                }
+            }
+        }
+
+        queue = next_steps;
+    }
+
+    let mut final_steps: Vec<Pos> = Vec::from(queue);
     println!("Found {} possible paths", final_steps.len());
     final_steps.sort();
     final_steps.dedup();
