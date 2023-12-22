@@ -133,18 +133,25 @@ fn part1(input: &str) -> u64 {
                 if !bricks.contains_key(&z_below) {
                     continue;
                 }
-                dbg!(z_below);
+
                 let bricks_below = bricks.get_mut(&z_below).unwrap();
                 let mut stopped = false;
+                let mut supporting_bricks = vec!();
+
                 for brick_below in bricks_below {
                     for mut pos in brick.iter() {
                         pos.z = z_below;
                         if brick_below.contains(pos) {
-                            brick_below.supports += 1;
+                            supporting_bricks.push(brick_below);
                             stopped = true;
                             break;
                         }
                     }
+                }
+
+                // if resting on exactly one brick, mark it as non-disintegratable
+                if supporting_bricks.len() == 1 {
+                    supporting_bricks[0].supports += 1;
                 }
 
                 if stopped || z_below == 1 {
@@ -170,7 +177,7 @@ fn part1(input: &str) -> u64 {
     bricks
         .values()
         .flatten()
-        .filter(|brick| brick.supports != 1)
+        .filter(|brick| brick.supports == 0)
         .count() as u64
 }
 
