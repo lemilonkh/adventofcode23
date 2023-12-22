@@ -56,7 +56,7 @@ struct BrickIter<'a> {
 impl Iterator for BrickIter<'_> {
     type Item = Vec3;
 
-    fn next<'a>(&'a mut self) -> Option<Self::Item> {
+    fn next(&mut self) -> Option<Self::Item> {
         if self.index > self.length {
             return None;
         }
