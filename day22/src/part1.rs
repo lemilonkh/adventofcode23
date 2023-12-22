@@ -129,7 +129,7 @@ fn part1(input: &str) -> u64 {
         }
         let current_bricks = bricks.get(&z).unwrap().clone();
         for mut brick in current_bricks {
-            for z_below in (1..brick.start.z - 1).rev() {
+            for z_below in (1..=brick.start.z - 1).rev() {
                 if !bricks.contains_key(&z_below) {
                     continue;
                 }
