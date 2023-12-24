@@ -252,6 +252,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "day23"
+version = "0.1.0"
+dependencies = [
+ "array2d",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "day3"
 version = "0.1.0"
 
