@@ -14,7 +14,7 @@ enum Direction {
 }
 
 impl Direction {
-    fn delta(&self) -> (i32, i32) {
+    fn delta(&self) -> (isize, isize) {
         match self {
             NORTH => (0, -1),
             EAST => (1, 0),
@@ -26,8 +26,8 @@ impl Direction {
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialOrd, Ord)]
 struct Pos {
-    x: i32,
-    y: i32,
+    x: usize,
+    y: usize,
 }
 impl PartialEq for Pos {
     fn eq(&self, other: &Self) -> bool {
@@ -35,15 +35,18 @@ impl PartialEq for Pos {
     }
 }
 
-fn is_in_bounds(position: (i32, i32), width: usize, height: usize) -> bool {
-    position.0 >= 0 && position.1 >= 0 && position.0 < width as i32 && position.1 < height as i32
+fn is_in_bounds(position: (isize, isize), width: usize, height: usize) -> bool {
+    position.0 >= 0
+        && position.1 >= 0
+        && position.0 < width as isize
+        && position.1 < height as isize
 }
 
 fn get_successors(grid: &Array2D<u8>, pos: &Pos) -> Vec<Pos> {
     Direction::iter()
         .filter_map(|direction| {
             let delta = direction.delta();
-            let new_pos = (pos.x + delta.0, pos.y + delta.1);
+            let new_pos = (pos.x as isize + delta.0, pos.y as isize + delta.1);
             let in_bounds = is_in_bounds(new_pos, grid.num_columns(), grid.num_rows());
             if !in_bounds {
                 return None;
@@ -57,8 +60,8 @@ fn get_successors(grid: &Array2D<u8>, pos: &Pos) -> Vec<Pos> {
             }
 
             Some(Pos {
-                x: new_pos.0,
-                y: new_pos.1,
+                x: new_pos.0 as usize,
+                y: new_pos.1 as usize,
             })
         })
         .collect()
@@ -69,7 +72,7 @@ fn depth_first_search(
     visited_grid: &mut Array2D<bool>,
     position: Pos,
 ) -> Option<u32> {
-    if position.y == visited_grid.num_rows() as i32 - 1 {
+    if position.y == visited_grid.num_rows() - 1 {
         return Some(0);
     }
 
@@ -95,8 +98,8 @@ fn part1(input: &str) -> Result<u32, Error> {
     let lines: Vec<Vec<u8>> = input.lines().map(|line| line.as_bytes().to_vec()).collect();
 
     let grid = Array2D::from_rows(&lines)?;
-    let width = grid.num_columns() as i32;
-    let height = grid.num_rows() as i32;
+    let width = grid.num_columns();
+    let height = grid.num_rows();
 
     // construct graph of all nodes and their neighbors as edges
     let mut graph: BTreeMap<Pos, Vec<(Pos, u32)>> = BTreeMap::new();
@@ -137,7 +140,7 @@ fn part1(input: &str) -> Result<u32, Error> {
     }
 
     let start_pos = Pos { x: 1, y: 0 };
-    let mut seen = Array2D::filled_with(false, height as usize, width as usize);
+    let mut seen = Array2D::filled_with(false, height, width);
     let max_length = depth_first_search(&graph, &mut seen, start_pos).expect("found longest path");
 
     Ok(max_length)
