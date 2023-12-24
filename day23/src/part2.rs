@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::BTreeMap;
 
 use array2d::{Array2D, Error};
 use strum::IntoEnumIterator;
@@ -39,7 +39,7 @@ fn is_in_bounds(position: (i32, i32), width: usize, height: usize) -> bool {
     position.0 >= 0 && position.1 >= 0 && position.0 < width as i32 && position.1 < height as i32
 }
 
-fn get_successors(grid: &Array2D<u8>, pos: &Pos, path: &Vec<Pos>) -> Vec<Pos> {
+fn get_successors(grid: &Array2D<u8>, pos: &Pos) -> Vec<Pos> {
     Direction::iter()
         .filter_map(|direction| {
             let delta = direction.delta();
@@ -56,16 +56,39 @@ fn get_successors(grid: &Array2D<u8>, pos: &Pos, path: &Vec<Pos>) -> Vec<Pos> {
                 return None;
             }
 
-            if path.iter().any(|p| p.x == new_pos.0 && p.y == new_pos.1) {
-                return None;
-            }
-
             Some(Pos {
                 x: new_pos.0,
                 y: new_pos.1,
             })
         })
         .collect()
+}
+
+fn depth_first_search(
+    graph: &BTreeMap<Pos, Vec<(Pos, u32)>>,
+    visited_grid: &mut Array2D<bool>,
+    position: Pos,
+) -> Option<u32> {
+    if position.y == visited_grid.num_rows() as i32 - 1 {
+        return Some(0);
+    }
+
+    let mut max_length = None;
+    for &(pos, dist) in &graph[&position] {
+        if !visited_grid.get(pos.y as usize, pos.x as usize).unwrap() {
+            visited_grid
+                .set(pos.y as usize, pos.x as usize, true)
+                .expect("wrote to grid");
+            if let Some(d) = depth_first_search(graph, visited_grid, pos) {
+                max_length = Some(max_length.unwrap_or(0).max(d + dist));
+            }
+            visited_grid
+                .set(pos.y as usize, pos.x as usize, false)
+                .expect("wrote to grid");
+        }
+    }
+
+    max_length
 }
 
 fn part1(input: &str) -> Result<u32, Error> {
@@ -77,56 +100,49 @@ fn part1(input: &str) -> Result<u32, Error> {
 
     let initial_position = Pos { x: 1, y: 0 };
 
-    let mut queue = VecDeque::new();
-    queue.push_back((initial_position, 0, vec![initial_position]));
+    // construct graph of all nodes and their neighbors as edges
+    let mut graph: BTreeMap<Pos, Vec<(Pos, u32)>> = BTreeMap::new();
 
-    let mut path_lengths = vec![];
-
-    while !queue.is_empty() {
-        let (mut pos, mut current_length, mut path) = queue.pop_front().unwrap();
-        loop {
-            let successors = get_successors(&grid, &pos, &path);
-            if successors.len() == 0 {
-                break;
+    for y in 0..height {
+        for x in 0..width {
+            let pos = Pos { x, y };
+            let node = graph.entry(pos).or_default();
+            for successor in get_successors(&grid, &pos) {
+                node.push((successor, 1));
             }
-            if successors.len() > 1 {
-                for &successor in successors[1..].iter() {
-                    let mut split_path = path.clone();
-                    split_path.push(successor);
-                    queue.push_back((successor, current_length + 1, split_path));
-                }
-            }
-            pos = successors[0];
-            current_length += 1;
-            path.push(pos);
-        }
-
-        // println!("Path ends at {:?} with len {}", pos, current_length);
-        if pos.x == width as i32 - 2 && pos.y == height as i32 - 1 {
-            path_lengths.push((current_length, path));
         }
     }
 
-    let (longest_length, longest_path) = path_lengths
+    // collapse linear corridors to single edges
+    let corridors = graph
         .iter()
-        .max_by_key(|(len, _)| len)
-        .expect("found max");
+        .filter(|(_, edges)| edges.len() == 2)
+        .map(|(node, _)| *node)
+        .collect::<Vec<Pos>>();
 
-    // /* enable for debug output of grid and chosen path
-    for y in 0..grid.num_rows() as i32 {
-        for x in 0..grid.num_columns() as i32 {
-            let pos = longest_path.iter().find(|p| p.x == x && p.y == y);
-            if pos.is_some() {
-                print!("O");
-            } else {
-                print!("{}", *grid.get(y as usize, x as usize).unwrap() as char);
+    for pos in corridors {
+        let neighbors = graph.remove(&pos).unwrap();
+        let (pos1, dist1) = neighbors[0];
+        let (pos2, dist2) = neighbors[1];
+        let neighbor1 = graph.get_mut(&pos1);
+        if let Some(n1) = neighbor1 {
+            if let Some(i) = n1.iter().position(|&(p, _)| p == pos) {
+                n1[i] = (pos2, dist1 + dist2);
             }
         }
-        println!();
+        let neighbor2 = graph.get_mut(&pos2);
+        if let Some(n2) = neighbor2 {
+            if let Some(i) = n2.iter().position(|&(p, _)| p == pos) {
+                n2[i] = (pos1, dist1 + dist2);
+            }
+        }
     }
-    // */
 
-    Ok(*longest_length)
+    let mut seen = Array2D::filled_with(false, height as usize, width as usize);
+    let max_length =
+        depth_first_search(&graph, &mut seen, initial_position).expect("found longest path");
+
+    Ok(max_length)
 }
 
 fn main() {
