@@ -98,8 +98,6 @@ fn part1(input: &str) -> Result<u32, Error> {
     let width = grid.num_columns() as i32;
     let height = grid.num_rows() as i32;
 
-    let initial_position = Pos { x: 1, y: 0 };
-
     // construct graph of all nodes and their neighbors as edges
     let mut graph: BTreeMap<Pos, Vec<(Pos, u32)>> = BTreeMap::new();
 
@@ -138,9 +136,9 @@ fn part1(input: &str) -> Result<u32, Error> {
         }
     }
 
+    let start_pos = Pos { x: 1, y: 0 };
     let mut seen = Array2D::filled_with(false, height as usize, width as usize);
-    let max_length =
-        depth_first_search(&graph, &mut seen, initial_position).expect("found longest path");
+    let max_length = depth_first_search(&graph, &mut seen, start_pos).expect("found longest path");
 
     Ok(max_length)
 }
