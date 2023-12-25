@@ -77,8 +77,8 @@ fn part1(input: &str, axis_min: f64, axis_max: f64) -> usize {
         .iter()
         .tuple_combinations()
         .filter(|(&(pa1, va), &(pb1, vb))| {
-            println!("Hailstone A: {:?} @ {:?}", pa1, va);
-            println!("Hailstone B: {:?} @ {:?}", pb1, vb);
+            // println!("Hailstone A: {:?} @ {:?}", pa1, va);
+            // println!("Hailstone B: {:?} @ {:?}", pb1, vb);
 
             let pa2 = pa1 + va;
             let pb2 = pb1 + vb;
@@ -90,16 +90,16 @@ fn part1(input: &str, axis_min: f64, axis_max: f64) -> usize {
                 / ((pa1.x - pa2.x) * (pb1.y - pb2.y) - (pa1.y - pa2.y) * (pb1.x - pb2.x));
 
             if ta < 0.0 {
-                println!("Hailstones' paths crossed in the past for hailstone A.");
+                // println!("Hailstones' paths crossed in the past for hailstone A.");
                 return false;
             }
             if tb < 0.0 {
-                println!("Hailstones' paths crossed in the past for hailstone B.");
+                // println!("Hailstones' paths crossed in the past for hailstone B.");
                 return false;
             }
 
             let cross = pa1 + va * ta;
-            println!("Crossing at {:?}", cross);
+            // println!("Crossing at {:?}", cross);
             cross.x >= axis_min && cross.x <= axis_max && cross.y >= axis_min && cross.y <= axis_max
         })
         .count()
