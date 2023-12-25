@@ -52,10 +52,10 @@ fn find_speed(speeds: Vec<(i64, i64)>) -> i64 {
         .tuple_combinations()
         .fold(possibilities, |mut possible, ((p1, v1), (p2, v2))| {
             if v1 == v2 {
-                let delta = (p1 - p2).abs();
+                let offset = (p1 - p2).abs();
                 for i in 0..possible.len() {
-                    let cross = i as i64 + min_speed - *v2;
-                    if cross != 0 && possible[i] && delta % cross != 0 {
+                    let speed_diff = i as i64 + min_speed - *v2;
+                    if speed_diff != 0 && offset % speed_diff != 0 {
                         possible[i] = false;
                     }
                 }
